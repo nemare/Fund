@@ -1,13 +1,17 @@
 # coding=utf-8
 import pandas as pd
-import numpy as np
+from pandas.tseries.offsets import CustomBusinessDay
 
 df_user_profile_table = pd.read_csv('user_profile_table.csv')
 df_mfd_bank_shibor_sep = pd.read_excel('mfd_bank_shibor_sep.xls', 'Sheet')
 
 df_mfd_bank_shibor_sep = df_mfd_bank_shibor_sep.fillna(0)
-df_mfd_bank_shibor_sep['mfd_date'] = df_mfd_bank_shibor_sep['mfd_date'].apply(
+print (df_mfd_bank_shibor_sep.head(20))
+# 转换成星期 TODO 考虑休假
+df_mfd_bank_shibor_sep['diff'] = df_mfd_bank_shibor_sep['mfd_date'].apply(
     lambda x: (pd.to_datetime(x) - pd.to_datetime('2013-07-01')).days)
+df_mfd_bank_shibor_sep['mfd_date'] = df_mfd_bank_shibor_sep['mfd_date'].apply(
+    lambda x: pd.Timestamp(pd.to_datetime(x)).weekday())
 df_mfd_bank_shibor_sep.to_csv('mfd_bank_shibor_sep.csv')
 
 df_user_profile_table['x'] = '1'
@@ -64,7 +68,8 @@ df_mfd_bank_shibor_sep['y'] = '1'
 # 3  3.970  4.6632  4.8640  4.9339   5  1
 # 4  3.965  4.6539  4.8631  4.9328   5  1
 df_val = df_user_profile_table.merge(df_mfd_bank_shibor_sep, left_on='x', right_on='y').loc[:,
-         ['user_id', 'sex', 'city', 'constellation', 'mfd_date', 'O/N', '1W', '2W', '1M', '3M', '6M', '9M', '1Y']]
+         ['user_id', 'sex', 'city', 'constellation', 'mfd_date', 'diff', 'O/N', '1W', '2W', '1M', '3M', '6M', '9M',
+          '1Y']]
 print (df_val.head(10))
 df_val.to_csv('data_val.csv')
 #    user_id  mfd_date    O/N     1W     2W     1M      3M      6M      9M  1Y

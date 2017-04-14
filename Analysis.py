@@ -1,14 +1,17 @@
 # coding=utf-8
 import pandas as pd
-from sklearn import cross_validation
+from sklearn import cross_validation, tree, preprocessing
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
-
-def getResult(q, y_purchase_predict, y_redeem_predict):
+# TODO 对负值的处理
+def getResult(q, dif, y_purchase_predict, y_redeem_predict):
     df_result = pd.read_csv('tc_comp_predict_table_date.csv')
     q['purchase'] = y_purchase_predict
     q['redeem'] = y_redeem_predict
-    q = q.loc[:, ['mfd_date', 'purchase', 'redeem']].groupby('mfd_date', as_index=False).sum()
+    q['diff'] = dif
+    print (q.head())
+    q = q.loc[:, ['mfd_date', 'diff', 'purchase', 'redeem']].groupby('diff', as_index=False).sum()
     df_result['purchase'] = q['purchase'].round(2)
     df_result['redeem'] = q['redeem'].round(2)
     print (df_result.head())
@@ -48,31 +51,11 @@ x = df.loc[:, ['sex', 'city', 'constellation', 'report_date',
 # 4        0.0000
 
 # retrieve character
-# 21列
-# sex 0,1
-# city
-# 6081949
-# 6281949
-# 6301949
-# 6411949
-# 6412149
-# 6481949
-# 6581949
-# 双子座
-# 双鱼座
-# 处女座
-# 天秤座
-# 天蝎座
-# 射手座
-# 巨蟹座
-# 摩羯座
-# 水瓶座
-# 狮子座
-# 白羊座
-# 金牛座
 dummies_city = pd.get_dummies(x['city'])
 dummies_constellation = pd.get_dummies(x['constellation'])
 dummies_sex = pd.get_dummies(x['sex'])
+dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')
+print (dummies_weekday.head())
 # print (pd.get_dummies(x['city']).head())
 # print (pd.get_dummies(x['constellation']).head())
 # print (pd.get_dummies(x['sex']).head())
@@ -136,13 +119,14 @@ dummies_sex = pd.get_dummies(x['sex'])
 # 金牛座              float64
 X = pd.concat([x, dummies_sex, dummies_city, dummies_constellation], axis=1)
 X = X.loc[:,
-    ['report_date', 'Interest_O_N', 'Interest_1_W', 'Interest_2_W', 'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
+    ['report_date', 'Interest_O_N', 'Interest_1_W', 'Interest_2_W',
+     'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
      'Interest_9_M', 'Interest_1_Y',
      0, 1,
      6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
      '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座'
      ]]  # 30列
-# print (X.head())
+print (X.head())
 #    report_date  Interest_O_N  Interest_1_W  Interest_2_W  Interest_1_M  \
 # 0          231         2.951        3.8790         4.483         5.365
 # 1          367         2.960        3.3930         3.500         4.132
@@ -175,7 +159,7 @@ y = df.loc[:, ['total_purchase_amt', 'total_redeem_amt']]
 # 2                   6                 0
 # 3                   7                 0
 # 4                   0                 0
-X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.8, random_state=5)
+X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.4, random_state=10)
 # train target data
 y_purchase_train = y_train['total_purchase_amt']
 y_redeem_train = y_train['total_redeem_amt']
@@ -184,7 +168,7 @@ y_purchase_test = y_test['total_purchase_amt']
 y_redeem_test = y_test['total_redeem_amt']
 
 # DecisionTree
-regr_1 = DecisionTreeRegressor(max_depth=20)
+regr_1 = DecisionTreeRegressor()
 regr_2 = DecisionTreeRegressor(max_depth=15)
 regr_1.fit(X_train, y_purchase_train)
 regr_2.fit(X_train, y_purchase_train)
@@ -193,7 +177,7 @@ print ('DecisionTree score')
 print(regr_1.score(X_test, y_purchase_test))
 print(regr_2.score(X_test, y_purchase_test))
 
-regr_3 = DecisionTreeRegressor(max_depth=20)
+regr_3 = DecisionTreeRegressor()
 regr_4 = DecisionTreeRegressor(max_depth=15)
 regr_3.fit(X_train, y_redeem_train)
 regr_4.fit(X_train, y_redeem_train)
@@ -213,12 +197,21 @@ print ('LinearRegression score')
 print (regr_5.score(X_test, y_purchase_test))
 print (regr_6.score(X_test, y_redeem_test))
 
+# Random Forest
+# regr_7 = RandomForestRegressor()
+# regr_8 = RandomForestRegressor()
+# regr_7.fit(X_train, y_purchase_train)
+# regr_8.fit(X_train, y_redeem_train)
+#
+# print ('RandomForest')
+# print (regr_7.score(X_test, y_purchase_test))
+# print (regr_8.score(X_test, y_redeem_test))
 # predict
 dummies_city = pd.get_dummies(df_val['city'])
 dummies_constellation = pd.get_dummies(df_val['constellation'])
 dummies_sex = pd.get_dummies(df_val['sex'])
-
 X_val = pd.concat([df_val, dummies_sex, dummies_city, dummies_constellation], axis=1)
+diff = X_val['diff']
 X_val = X_val.loc[:,
         ['mfd_date', 'O/N', '1W', '2W', '1M', '3M', '6M',
          '9M', '1Y',
@@ -226,15 +219,16 @@ X_val = X_val.loc[:,
          6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
          '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座'
          ]]
-
+print (X_val.head())
 # max_depth 20
-y_purchase_predict20 = regr_1.predict(X_val)
-y_redeem_predict20 = regr_3.predict(X_val)
-getResult(X_val, y_purchase_predict20, y_redeem_predict20)
+# y_purchase_predict20 = regr_1.predict(X_val)
+# y_redeem_predict20 = regr_3.predict(X_val)
+# getResult(X_val, y_purchase_predict20, y_redeem_predict20)
 # # max_depth 15
 # y_purchase_predict15 = regr_2.predict(X_val)
 # y_redeem_predict15 = regr_4.predict(X_val)
 #
-# # linear
-# y_purchase_predict = regr_5.predict(X_val)
-# y_redeem_predict = regr_6.predict(X_val)
+# linear
+y_purchase_predict = regr_5.predict(X_val)
+y_redeem_predict = regr_6.predict(X_val)
+getResult(X_val, diff, y_purchase_predict, y_redeem_predict)
