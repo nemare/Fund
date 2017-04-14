@@ -4,6 +4,7 @@ from sklearn import cross_validation, tree, preprocessing
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
+
 # TODO 对负值的处理
 def getResult(q, dif, y_purchase_predict, y_redeem_predict):
     df_result = pd.read_csv('tc_comp_predict_table_date.csv')
@@ -11,7 +12,7 @@ def getResult(q, dif, y_purchase_predict, y_redeem_predict):
     q['redeem'] = y_redeem_predict
     q['diff'] = dif
     print (q.head())
-    q = q.loc[:, ['mfd_date', 'diff', 'purchase', 'redeem']].groupby('diff', as_index=False).sum()
+    q = q.loc[:, ['diff', 'purchase', 'redeem']].groupby('diff', as_index=False).sum()
     df_result['purchase'] = q['purchase'].round(2)
     df_result['redeem'] = q['redeem'].round(2)
     print (df_result.head())
@@ -54,8 +55,8 @@ x = df.loc[:, ['sex', 'city', 'constellation', 'report_date',
 dummies_city = pd.get_dummies(x['city'])
 dummies_constellation = pd.get_dummies(x['constellation'])
 dummies_sex = pd.get_dummies(x['sex'])
-dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')
-print (dummies_weekday.head())
+dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')  # TODO 把日期也改为0,1
+# print (dummies_weekday.head())
 # print (pd.get_dummies(x['city']).head())
 # print (pd.get_dummies(x['constellation']).head())
 # print (pd.get_dummies(x['sex']).head())
@@ -117,16 +118,18 @@ print (dummies_weekday.head())
 # 狮子座              float64
 # 白羊座              float64
 # 金牛座              float64
-X = pd.concat([x, dummies_sex, dummies_city, dummies_constellation], axis=1)
+X = pd.concat([x, dummies_sex, dummies_city, dummies_constellation, dummies_weekday], axis=1)
 X = X.loc[:,
-    ['report_date', 'Interest_O_N', 'Interest_1_W', 'Interest_2_W',
-     'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
-     'Interest_9_M', 'Interest_1_Y',
-     0, 1,
-     6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
-     '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座'
-     ]]  # 30列
-print (X.head())
+    [
+        'Interest_O_N', 'Interest_1_W', 'Interest_2_W',
+        'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
+        'Interest_9_M', 'Interest_1_Y',
+        0, 1,
+        # 6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
+        # '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座',
+        'weekday_0', 'weekday_1', 'weekday_2', 'weekday_3', 'weekday_4', 'weekday_5', 'weekday_6'
+    ]]
+# print (X.head())
 #    report_date  Interest_O_N  Interest_1_W  Interest_2_W  Interest_1_M  \
 # 0          231         2.951        3.8790         4.483         5.365
 # 1          367         2.960        3.3930         3.500         4.132
@@ -210,16 +213,19 @@ print (regr_6.score(X_test, y_redeem_test))
 dummies_city = pd.get_dummies(df_val['city'])
 dummies_constellation = pd.get_dummies(df_val['constellation'])
 dummies_sex = pd.get_dummies(df_val['sex'])
-X_val = pd.concat([df_val, dummies_sex, dummies_city, dummies_constellation], axis=1)
+dummies_weekday = pd.get_dummies(df_val['mfd_date'], prefix='weekday')
+X_val = pd.concat([df_val, dummies_sex, dummies_city, dummies_constellation, dummies_weekday], axis=1)
 diff = X_val['diff']
 X_val = X_val.loc[:,
-        ['mfd_date', 'O/N', '1W', '2W', '1M', '3M', '6M',
-         '9M', '1Y',
-         0, 1,
-         6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
-         '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座'
-         ]]
-print (X_val.head())
+        [
+            'O/N', '1W', '2W', '1M', '3M', '6M',
+            '9M', '1Y',
+            0, 1,
+            # 6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
+            # '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座',
+            'weekday_0', 'weekday_1', 'weekday_2', 'weekday_3', 'weekday_4', 'weekday_5', 'weekday_6'
+        ]]
+# print (X_val.head())
 # max_depth 20
 # y_purchase_predict20 = regr_1.predict(X_val)
 # y_redeem_predict20 = regr_3.predict(X_val)
