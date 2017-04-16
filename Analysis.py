@@ -55,7 +55,7 @@ x = df.loc[:, ['sex', 'city', 'constellation', 'report_date',
 dummies_city = pd.get_dummies(x['city'])
 dummies_constellation = pd.get_dummies(x['constellation'])
 dummies_sex = pd.get_dummies(x['sex'])
-dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')  # TODO 把日期也改为0,1
+dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')
 # print (dummies_weekday.head())
 # print (pd.get_dummies(x['city']).head())
 # print (pd.get_dummies(x['constellation']).head())
@@ -121,10 +121,10 @@ dummies_weekday = pd.get_dummies(x['report_date'], prefix='weekday')  # TODO 把
 X = pd.concat([x, dummies_sex, dummies_city, dummies_constellation, dummies_weekday], axis=1)
 X = X.loc[:,
     [
-        'Interest_O_N', 'Interest_1_W', 'Interest_2_W',
-        'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
-        'Interest_9_M', 'Interest_1_Y',
-        0, 1,
+        # 'Interest_O_N', 'Interest_1_W', 'Interest_2_W',
+        # 'Interest_1_M', 'Interest_3_M', 'Interest_6_M',
+        # 'Interest_9_M', 'Interest_1_Y',
+        # 0, 1,
         # 6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
         # '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座',
         'weekday_0', 'weekday_1', 'weekday_2', 'weekday_3', 'weekday_4', 'weekday_5', 'weekday_6'
@@ -218,9 +218,9 @@ X_val = pd.concat([df_val, dummies_sex, dummies_city, dummies_constellation, dum
 diff = X_val['diff']
 X_val = X_val.loc[:,
         [
-            'O/N', '1W', '2W', '1M', '3M', '6M',
-            '9M', '1Y',
-            0, 1,
+            # 'O/N', '1W', '2W', '1M', '3M', '6M',
+            # '9M', '1Y',
+            # 0, 1,
             # 6081949, 6281949, 6301949, 6411949, 6412149, 6481949, 6581949,
             # '双子座', '双鱼座', '处女座', '天秤座', '天蝎座', '射手座', '巨蟹座', '摩羯座', '水瓶座', '狮子座', '白羊座', '金牛座',
             'weekday_0', 'weekday_1', 'weekday_2', 'weekday_3', 'weekday_4', 'weekday_5', 'weekday_6'
